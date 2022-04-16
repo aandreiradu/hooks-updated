@@ -3,6 +3,7 @@ import IngredientItem from './IngredientItem';
 import classes from './IngredientList.module.css';
 
 const IngredientList = (props) => {
+    console.log('rendering ingredient list')
     const { ingredients } = props;
 
     const removeIngredientById = (ingredientId) => {

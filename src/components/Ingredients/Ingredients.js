@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useReducer } from 'react'
+import React, { useState, useEffect, useCallback, useReducer, useMemo } from 'react'
 import IngredientForm from './IngredientForm'
 import IngredientList from './IngredientList'
 import Search from './Search'
@@ -91,7 +91,7 @@ const Ingredients = () => {
     //         .catch((error) => console.log(error));
     // }, []);
 
-    const addIngredientHandler = (ing) => {
+    const addIngredientHandler = useCallback((ing) => {
         const sendRequest = async () => {
             // setIsLoading(true);
             dispatchHttp({ type: 'SEND' });
@@ -139,9 +139,9 @@ const Ingredients = () => {
                 // setIsLoading(false);
                 dispatchHttp({ type: 'ERROR', errorMsg: 'Something went wrong' })
             });
-    }
+    }, [dispatchHttp]);
 
-    const removeIngredientHandler = (ingredientId) => {
+    const removeIngredientHandler = useCallback((ingredientId) => {
         const sendRequest = async () => {
             dispatchHttp({ type: 'SEND' })
             const response = await fetch(`https://react-hooks-updated-5f3e1-default-rtdb.europe-west1.firebasedatabase.app/ingredients/${ingredientId}.json`, {
@@ -169,17 +169,28 @@ const Ingredients = () => {
                 // setIsLoading(false);
                 dispatchHttp({ type: 'ERROR', errorMsg: 'Something went wrong!' })
             });
-    }
+    }, [dispatchHttp])
 
-    const clearError = () => {
+    const clearError = useCallback(() => {
         // setError(null)
         dispatchHttp({ type: 'CLEAR' });
-    };
+    }, []);
 
     const filterIngredientsHandler = useCallback(filteredIngredients => {
         // setIngredients(filteredIngredients);
         dispatchIngredients({ type: 'SET', ingredient: filteredIngredients })
     }, []);
+
+
+    // ingredients list
+    const ingredientsList = useMemo(() => {
+        return (
+            <IngredientList
+                ingredients={ingredients}
+                onRemoveIngredintById={removeIngredientHandler}
+            />
+        )
+    }, [ingredients, removeIngredientHandler]);
 
     return (
         <div className='App'>
@@ -189,7 +200,7 @@ const Ingredients = () => {
             <IngredientForm onAddIngredient={addIngredientHandler} onRemoveIngredient={removeIngredientHandler} isLoading={httpState.loading} />
             <section>
                 <Search onLoadIngredients={filterIngredientsHandler} />
-                <IngredientList ingredients={ingredients} onRemoveIngredintById={removeIngredientHandler} />
+                {ingredientsList}
             </section>
 
         </div>

@@ -7,6 +7,7 @@ import LoadingIndicator from '../UI/LoadingIndicator';
 
 
 const IngredientForm = React.memo((props) => {
+    console.log('RENDERING INGREDIENTFORM')
     const { isLoading } = props;
     const {
         value: enteredName,

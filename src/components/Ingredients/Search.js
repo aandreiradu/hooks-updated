@@ -25,7 +25,6 @@ const Search = React.memo(props => {
                     }
 
                     const data = await response.json();
-                    console.log('data search', data);
                     if (data) {
                         const loadedIngredients = [];
                         for (const key in data) {
@@ -38,7 +37,6 @@ const Search = React.memo(props => {
 
                         onLoadIngredients(loadedIngredients);
                     }
-                    console.log(data);
                 }
 
                 loadFilteredData()
