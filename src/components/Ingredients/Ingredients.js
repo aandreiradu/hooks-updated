@@ -1,12 +1,31 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useReducer } from 'react'
 import IngredientForm from './IngredientForm'
 import IngredientList from './IngredientList'
 import Search from './Search'
 import ErrorModal from '../UI/ErrorModal';
 
 
+const ingredientsReducer = (initialIngredientsState, action) => {
+    // dispatch by type, action: {type: 'TYPE'};
+    switch (action.type) {
+        case 'SET': //used for filter
+            return action.ingredient // expect to get the ingredient obj
+
+        case 'ADD':
+            return [...initialIngredientsState, action.ingredient];
+
+        case 'DELETE':
+            return initialIngredientsState.filter((ing) => ing.id !== action.ingredientId);
+
+        default:
+            throw new Error('IDK')
+    }
+}
+
+
 const Ingredients = () => {
-    const [ingredients, setIngredients] = useState([]);
+    const [ingredients, dispatch] = useReducer(ingredientsReducer, []);
+    // const [ingredients, setIngredients] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState();
 
@@ -57,13 +76,25 @@ const Ingredients = () => {
             const data = await response.json();
             console.log(data);
 
-            setIngredients((prevState) => {
-                return [...ingredients, {
+            // setIngredients((prevState) => {
+            //     return [...ingredients, {
+            //         id: data.name,
+            //         title: ing.title,
+            //         amount: ing.amount
+            //     }];
+            // })
+
+            dispatch({
+                type: 'ADD',
+                ingredient: {
                     id: data.name,
-                    title: ing.title,
-                    amount: ing.amount
-                }];
+                    // title: ing.title,
+                    // amonut: ing.amount,
+                    ...ing
+                }
+
             })
+
         }
 
         sendRequest()
@@ -88,9 +119,11 @@ const Ingredients = () => {
             console.log(data);
 
             setIsLoading(false);
-            setIngredients((prevState) => {
-                return prevState.filter((ing) => ing.id !== ingredientId);
-            })
+            // setIngredients((prevState) => {
+            //     return prevState.filter((ing) => ing.id !== ingredientId);
+            // })
+            dispatch({ type: 'DELETE', ingredientId })
+
         }
 
         sendRequest()
@@ -103,8 +136,9 @@ const Ingredients = () => {
     const clearError = () => setError(null);
 
     const filterIngredientsHandler = useCallback(filteredIngredients => {
-        setIngredients(filteredIngredients);
-    }, [setIngredients]);
+        // setIngredients(filteredIngredients);
+        dispatch({ type: 'SET', ingredient: filteredIngredients })
+    }, []);
 
     return (
         <div className='App'>
