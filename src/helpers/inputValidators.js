@@ -1,6 +1,6 @@
 
 const inputValidators = () => {
-    const nameValidator = (text) => text.trim() && text.trim().length > 3;
+    const nameValidator = (text) => text.trim() && text.trim().length >= 1;
 
     const amountValidator = (amount) => amount && amount > 0;
 

@@ -6,7 +6,6 @@ const IngredientItem = (props) => {
     const { id, title, amount } = props;
 
     const removeIngredientById = (ingredientId) => {
-        console.log(ingredientId);
 
         props.onRemoveIngredientById(ingredientId);
     }

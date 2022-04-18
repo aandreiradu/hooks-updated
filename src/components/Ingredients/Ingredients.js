@@ -3,6 +3,7 @@ import IngredientForm from './IngredientForm'
 import IngredientList from './IngredientList'
 import Search from './Search'
 import ErrorModal from '../UI/ErrorModal';
+import useHttp from '../../hooks/useHttp';
 
 
 const ingredientsReducer = (initialIngredientsState, action) => {
@@ -22,163 +23,114 @@ const ingredientsReducer = (initialIngredientsState, action) => {
     }
 }
 
-const httpReducer = (currentHttpState, action) => {
-    // dispatch by type, action: {type: 'TYPE'};
-    switch (action.type) {
-        case 'SEND':
-            // just manage the state here;
-            return {
-                loading: true,
-                error: null
-            }
-
-        case 'RESPONSE':
-            return {
-                ...currentHttpState,
-                loading: false
-            }
-
-        case 'ERROR':
-            return {
-                loading: false,
-                error: action.errorMsg
-            }
-
-        case 'CLEAR':
-            return {
-                ...currentHttpState,
-                error: null
-            }
-
-        default:
-            throw new Error('DEFAULT??');
-    }
-}
 
 
 const Ingredients = () => {
+    console.log('RENDERING');
+    const {
+        isLoading,
+        data,
+        error,
+        sendRequest,
+        reqExtra,
+        reqIdentifier,
+        clear,
+    } = useHttp();
     const [ingredients, dispatchIngredients] = useReducer(ingredientsReducer, []);
-    const [httpState, dispatchHttp] = useReducer(httpReducer, { loading: false, error: null });
+
     // const [ingredients, setIngredients] = useState([]);
     // const [isLoading, setIsLoading] = useState(false);
     // const [error, setError] = useState();
 
-    // Moved this initial getData
-    // useEffect(() => {
-    //     const loadData = async () => {
-    //         const response = await fetch('https://react-hooks-updated-5f3e1-default-rtdb.europe-west1.firebasedatabase.app/ingredients.json');
-
-    //         if (!response.ok) {
-    //             throw new Error('Can\'t load data from server');
-    //         }
-
-    //         const data = await response.json();
-    //         if (data) {
-    //             const loadedIngredients = [];
-    //             for (const key in data) {
-    //                 loadedIngredients.push({
-    //                     id: key,
-    //                     title: data[key].title,
-    //                     amount: data[key].amount
-    //                 });
-    //             }
-
-    //             setIngredients(loadedIngredients);
-    //         }
-    //     }
-
-    //     loadData()
-    //         .catch((error) => console.log(error));
-    // }, []);
-
-    const addIngredientHandler = useCallback((ing) => {
-        const sendRequest = async () => {
-            // setIsLoading(true);
-            dispatchHttp({ type: 'SEND' });
-            const response = await fetch('https://react-hooks-updated-5f3e1-default-rtdb.europe-west1.firebasedatabase.app/ingredients.json', {
-                method: 'POST',
-                body: JSON.stringify(ing),
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Can\'t send data to server');
-            }
-
-            // setIsLoading(false);
-            dispatchHttp({ type: 'RESPONSE' })
-            const data = await response.json();
-            console.log(data);
-
-            // setIngredients((prevState) => {
-            //     return [...ingredients, {
-            //         id: data.name,
-            //         title: ing.title,
-            //         amount: ing.amount
-            //     }];
-            // })
-
+    // Moved this initial getData to Search (basically the inital fetch happens in Search component);
+    // send the request using sendRequest function from customHook and handle the response using this effect
+    useEffect(() => {
+        console.log('reqIdentifier in effect', reqIdentifier);
+        console.log('data in effect', data);
+        if (!isLoading && !error && reqIdentifier === 'REMOVE_INGREDIENT') {
+            console.log('reqIdentifier remove')
+            dispatchIngredients({ type: 'DELETE', ingredientId: reqExtra });
+        } else if (!isLoading && !error && reqIdentifier === 'ADD_INGREDIENT') {
+            console.log('reqIdentifier add')
             dispatchIngredients({
                 type: 'ADD',
-                ingredient: {
-                    id: data.name,
-                    // title: ing.title,
-                    // amonut: ing.amount,
-                    ...ing
-                }
-
-            })
-
+                ingredient: { id: data.name, ...reqExtra }
+            });
         }
+    }, [data, reqExtra, reqIdentifier, isLoading, error]);
 
-        sendRequest()
-            .catch(error => {
-                // setError('Something went wrong!');
-                // setIsLoading(false);
-                dispatchHttp({ type: 'ERROR', errorMsg: 'Something went wrong' })
-            });
-    }, [dispatchHttp]);
+    // we can also handle the response from sendRequest by changing the logic from the custom hook and 
+    // make this function to return a promise (return fetch....) and handle the response without useEffect.
 
-    const removeIngredientHandler = useCallback((ingredientId) => {
-        const sendRequest = async () => {
-            dispatchHttp({ type: 'SEND' })
-            const response = await fetch(`https://react-hooks-updated-5f3e1-default-rtdb.europe-west1.firebasedatabase.app/ingredients/${ingredientId}.json`, {
-                method: 'DELETE'
-            });
+    const addIngredientHandler = useCallback(ingredient => {
+        // moved all the logic to custom hook
+        // const sendRequest = async () => {
+        // setIsLoading(true);
+        // dispatchHttp({ type: 'SEND' });
+        // const response = await fetch('https://react-hooks-updated-5f3e1-default-rtdb.europe-west1.firebasedatabase.app/ingredients.json', {
+        //     method: 'POST',
+        //     body: JSON.stringify(ing),
+        //     headers: {
+        //         'Content-Type': 'application/json'
+        //     }
+        // });
 
-            if (!response.ok) {
-                throw new Error('Can\'t send data to server');
-            }
+        // if (!response.ok) {
+        //     throw new Error('Can\'t send data to server');
+        // }
 
-            const data = await response.json();
-            console.log(data);
+        // // setIsLoading(false);
+        // dispatchHttp({ type: 'RESPONSE' })
+        // const data = await response.json();
+        // console.log(data);
 
-            dispatchHttp({ type: 'RESPONSE' })
-            // setIngredients((prevState) => {
-            //     return prevState.filter((ing) => ing.id !== ingredientId);
-            // })
-            dispatchIngredients({ type: 'DELETE', ingredientId })
+        // setIngredients((prevState) => {
+        //     return [...ingredients, {
+        //         id: data.name,
+        //         title: ing.title,
+        //         amount: ing.amount
+        //     }];
+        // })
 
-        }
+        // dispatchIngredients({
+        //     type: 'ADD',
+        //     ingredient: {
+        //         id: data.name,
+        //         // title: ing.title,
+        //         // amonut: ing.amount,
+        //         ...ing
+        //     }
+        // })
+        // }
+        sendRequest(
+            'https://react-hooks-updated-5f3e1-default-rtdb.europe-west1.firebasedatabase.app/ingredients.json',
+            'POST',
+            JSON.stringify(ingredient),
+            ingredient,
+            'ADD_INGREDIENT'
+        );
 
-        sendRequest()
-            .catch(error => {
-                // setError('Something went wrong!');
-                // setIsLoading(false);
-                dispatchHttp({ type: 'ERROR', errorMsg: 'Something went wrong!' })
-            });
-    }, [dispatchHttp])
+    }, [sendRequest]);
 
-    const clearError = useCallback(() => {
-        // setError(null)
-        dispatchHttp({ type: 'CLEAR' });
-    }, []);
 
-    const filterIngredientsHandler = useCallback(filteredIngredients => {
-        // setIngredients(filteredIngredients);
-        dispatchIngredients({ type: 'SET', ingredient: filteredIngredients })
+    const removeIngredientHandler = useCallback(ingredientId => {
+        sendRequest(
+            `https://react-hooks-updated-5f3e1-default-rtdb.europe-west1.firebasedatabase.app/ingredients/${ingredientId}.json`,
+            'DELETE',
+            null,
+            ingredientId,
+            'REMOVE_INGREDIENT'
+        )
+    }, [sendRequest])
+
+    // const clearError = useCallback(() => {
+    //     // setError(null)
+    //     // dispatchHttp({ type: 'CLEAR' });
+    // }, []);
+
+    const filteredIngredientsHandler = useCallback(filteredIngredients => {
+        console.log('a rulat filteredIngredientsHandler');
+        dispatchIngredients({ type: 'SET', ingredient: filteredIngredients });
     }, []);
 
 
@@ -195,11 +147,16 @@ const Ingredients = () => {
     return (
         <div className='App'>
             {/* {error && <ErrorModal onClose={clearError}>{error}</ErrorModal>} */}
-            {httpState.error && <ErrorModal onClose={clearError}>{httpState.error}</ErrorModal>}
+            {error && <ErrorModal onClose={clear}>{error}</ErrorModal>}
 
-            <IngredientForm onAddIngredient={addIngredientHandler} onRemoveIngredient={removeIngredientHandler} isLoading={httpState.loading} />
+            <IngredientForm
+                onAddIngredient={addIngredientHandler}
+                onRemoveIngredient={removeIngredientHandler}
+                isLoading={isLoading}
+            />
+
             <section>
-                <Search onLoadIngredients={filterIngredientsHandler} />
+                <Search onLoadIngredients={filteredIngredientsHandler} />
                 {ingredientsList}
             </section>
 
