@@ -56,7 +56,7 @@ const useHttp = () => {
                 method: METHOD,
                 body: body,
                 headers: {
-                    'Content-Type': 'application.json'
+                    'Content-Type': 'application/json'
                 }
             });
 
